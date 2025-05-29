@@ -1,11 +1,8 @@
 import mongoose, { Connection } from 'mongoose';
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  'mongodb+srv://silveriohenriqueb:hOwQUMTo4zoiIWET@cluster0.ey1dlz6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-
+const MONGODB_URI = process.env.MONGODB_URI!;
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable.');
+  throw new Error("Please define the MONGODB_URI environment variable.");
 }
 
 declare global {
