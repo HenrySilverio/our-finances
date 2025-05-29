@@ -1,5 +1,5 @@
+import { ICreditCard } from '@/interfaces/CreditCard.interface';
 import mongoose, { Schema } from 'mongoose';
-import { ICreditCard } from './CreditCard.interface';
 
 const CreditCardSchema: Schema = new Schema(
   {

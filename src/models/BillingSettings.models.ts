@@ -1,5 +1,5 @@
+import { IBillingSettings } from '@/interfaces/BillingSettings.interface';
 import mongoose, { Schema } from 'mongoose';
-import { IBillingSettings } from './BillingSettings.interface';
 
 const BillingSettingsSchema: Schema = new Schema(
   {
