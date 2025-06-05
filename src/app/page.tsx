@@ -23,7 +23,7 @@ import {
   Cell
 } from 'recharts';
 
-// Mock data - em produção viria da API
+
 const mockData = {
   summary: {
     income: 8500,

@@ -2,107 +2,87 @@
 
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  ArrowUpRight, 
+import {
+  Plus,
+  Search,
+  Filter,
+  ArrowUpRight,
   ArrowDownRight,
   ChevronDown,
   Calendar,
   CreditCard,
   Wallet,
-  X
+  X,
 } from 'lucide-react';
 
-// Mock data - em produção viria da API
-const mockTransactions = [
-  {
-    id: '1',
-    type: 'expense',
-    category: 'Alimentação',
-    amount: 120.50,
-    description: 'Supermercado',
-    transactionDate: '2025-06-01',
-    account: { name: 'Nubank', type: 'checking' },
-    creditCard: null,
-  },
-  {
-    id: '2',
-    type: 'expense',
-    category: 'Transporte',
-    amount: 45.00,
-    description: 'Uber',
-    transactionDate: '2025-06-02',
-    account: null,
-    creditCard: { name: 'Mastercard' },
-  },
-  {
-    id: '3',
-    type: 'income',
-    category: 'Salário',
-    amount: 5000.00,
-    description: 'Pagamento mensal',
-    transactionDate: '2025-06-05',
-    account: { name: 'Itaú', type: 'checking' },
-    creditCard: null,
-  },
-  {
-    id: '4',
-    type: 'expense',
-    category: 'Lazer',
-    amount: 89.90,
-    description: 'Cinema',
-    transactionDate: '2025-06-07',
-    account: null,
-    creditCard: { name: 'Visa' },
-  },
-  {
-    id: '5',
-    type: 'income',
-    category: 'Freelance',
-    amount: 1200.00,
-    description: 'Projeto de design',
-    transactionDate: '2025-06-10',
-    account: { name: 'Nubank', type: 'checking' },
-    creditCard: null,
-  },
-];
-
-// Mock data para filtros
-const categories = [
-  'Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Educação', 
-  'Lazer', 'Roupas', 'Tecnologia', 'Serviços', 'Outros',
-  'Salário', 'Freelance', 'Investimentos', 'Vendas'
-];
-
-const accounts = [
-  { id: '1', name: 'Nubank', type: 'checking' },
-  { id: '2', name: 'Itaú', type: 'checking' },
-  { id: '3', name: 'Poupança', type: 'savings' },
-];
-
-const creditCards = [
-  { id: '1', name: 'Mastercard' },
-  { id: '2', name: 'Visa' },
-];
+// Defina uma interface para Transaction
+interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  category: string;
+  amount: number;
+  description: string;
+  transactionDate: string;
+  account: { id: string; name: string; type: 'checking' | 'savings' } | null;
+  creditCard: { id: string; name: string } | null;
+}
 
 export default function TransactionsPage() {
   const [showNewTransactionForm, setShowNewTransactionForm] = useState(false);
-  const [transactionType, setTransactionType] = useState<'income' | 'expense'>('expense');
-  const [paymentMethod, setPaymentMethod] = useState<'account' | 'creditCard'>('account');
+  const [transactionType, setTransactionType] = useState<'income' | 'expense'>(
+    'expense',
+  );
+  const [paymentMethod, setPaymentMethod] = useState<'account' | 'creditCard'>(
+    'account',
+  );
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
+  // novo estado de transações
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR').format(date);
+  const categories = ['Salário', 'Aluguel', 'Supermercado', 'Lazer', 'Transporte'];
+  const accounts: { id: string; name: string; type: 'checking' | 'savings' }[] = [
+    { id: 'acc1', name: 'Conta Corrente', type: 'checking' },
+    { id: 'acc2', name: 'Poupança',      type: 'savings'  },
+  ];
+  const creditCards: { id: string; name: string }[] = [
+    { id: 'cc1', name: 'Visa' },
+    { id: 'cc2', name: 'Mastercard' },
+    { id: 'cc3', name: 'American Express' },
+  ];
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  const form = new FormData(e.currentTarget);
+  const newTransaction: Transaction = {
+    id: String(Date.now()),
+    type: transactionType,
+    category: form.get('category') as string,
+    amount: parseFloat(form.get('amount') as string) || 0,
+    description: form.get('description') as string,
+    transactionDate: form.get('date') as string,
+    account:
+      paymentMethod === 'account'
+        ? accounts.find((acc) => acc.id === form.get('account')) ?? null
+        : null,
+    creditCard:
+      paymentMethod === 'creditCard'
+        ? creditCards.find((cc) => cc.id === form.get('creditCard')) ?? null
+        : null,
   };
+  setTransactions((prev) => [newTransaction, ...prev]);
+  setShowNewTransactionForm(false);
+  e.currentTarget.reset();
+};
 
   return (
     <Layout>
@@ -136,20 +116,16 @@ export default function TransactionsPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="relative">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50">
-                  <Calendar className="h-5 w-5 mr-2 text-gray-500" />
-                  <span>Período</span>
-                  <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
-                </button>
-              </div>
-              <div className="relative">
-                <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50">
-                  <Filter className="h-5 w-5 mr-2 text-gray-500" />
-                  <span>Filtros</span>
-                  <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
-                </button>
-              </div>
+              <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+                <Calendar className="h-5 w-5 mr-2 text-gray-500" />
+                <span>Período</span>
+                <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
+              </button>
+              <button className="flex items-center px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+                <Filter className="h-5 w-5 mr-2 text-gray-500" />
+                <span>Filtros</span>
+                <ChevronDown className="h-4 w-4 ml-2 text-gray-500" />
+              </button>
             </div>
           </div>
         </div>
@@ -158,7 +134,9 @@ export default function TransactionsPage() {
         {showNewTransactionForm && (
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Nova Transação</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Nova Transação
+              </h3>
               <button
                 onClick={() => setShowNewTransactionForm(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -167,7 +145,7 @@ export default function TransactionsPage() {
               </button>
             </div>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               {/* Transaction Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -183,9 +161,13 @@ export default function TransactionsPage() {
                         : 'bg-white border border-gray-300 text-gray-700'
                     }`}
                   >
-                    <ArrowDownRight className={`h-5 w-5 mr-2 ${
-                      transactionType === 'expense' ? 'text-red-500' : 'text-gray-400'
-                    }`} />
+                    <ArrowDownRight
+                      className={`h-5 w-5 mr-2 ${
+                        transactionType === 'expense'
+                          ? 'text-red-500'
+                          : 'text-gray-400'
+                      }`}
+                    />
                     Despesa
                   </button>
                   <button
@@ -197,9 +179,13 @@ export default function TransactionsPage() {
                         : 'bg-white border border-gray-300 text-gray-700'
                     }`}
                   >
-                    <ArrowUpRight className={`h-5 w-5 mr-2 ${
-                      transactionType === 'income' ? 'text-green-500' : 'text-gray-400'
-                    }`} />
+                    <ArrowUpRight
+                      className={`h-5 w-5 mr-2 ${
+                        transactionType === 'income'
+                          ? 'text-green-500'
+                          : 'text-gray-400'
+                      }`}
+                    />
                     Receita
                   </button>
                 </div>
@@ -220,9 +206,13 @@ export default function TransactionsPage() {
                         : 'bg-white border border-gray-300 text-gray-700'
                     }`}
                   >
-                    <Wallet className={`h-5 w-5 mr-2 ${
-                      paymentMethod === 'account' ? 'text-blue-500' : 'text-gray-400'
-                    }`} />
+                    <Wallet
+                      className={`h-5 w-5 mr-2 ${
+                        paymentMethod === 'account'
+                          ? 'text-blue-500'
+                          : 'text-gray-400'
+                      }`}
+                    />
                     Conta
                   </button>
                   <button
@@ -234,9 +224,13 @@ export default function TransactionsPage() {
                         : 'bg-white border border-gray-300 text-gray-700'
                     }`}
                   >
-                    <CreditCard className={`h-5 w-5 mr-2 ${
-                      paymentMethod === 'creditCard' ? 'text-purple-500' : 'text-gray-400'
-                    }`} />
+                    <CreditCard
+                      className={`h-5 w-5 mr-2 ${
+                        paymentMethod === 'creditCard'
+                          ? 'text-purple-500'
+                          : 'text-gray-400'
+                      }`}
+                    />
                     Cartão de Crédito
                   </button>
                 </div>
@@ -244,7 +238,10 @@ export default function TransactionsPage() {
 
               {/* Amount */}
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Valor
                 </label>
                 <div className="relative">
@@ -252,22 +249,27 @@ export default function TransactionsPage() {
                     <span className="text-gray-500">R$</span>
                   </div>
                   <input
+                    name="amount"
                     type="number"
                     id="amount"
                     step="0.01"
                     min="0"
                     placeholder="0,00"
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                   />
                 </div>
               </div>
 
               {/* Category */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Categoria
                 </label>
                 <select
+                  name="category"
                   id="category"
                   className="py-2 px-3 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -283,27 +285,36 @@ export default function TransactionsPage() {
               {/* Account or Credit Card */}
               {paymentMethod === 'account' ? (
                 <div>
-                  <label htmlFor="account" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="account"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Conta
                   </label>
                   <select
+                    name="account"
                     id="account"
-                    className="py-2 px-3 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="py-2 px-3 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                   >
                     <option value="">Selecione uma conta</option>
                     {accounts.map((account) => (
                       <option key={account.id} value={account.id}>
-                        {account.name} ({account.type === 'checking' ? 'Corrente' : 'Poupança'})
+                        {account.name} (
+                        {account.type === 'checking' ? 'Corrente' : 'Poupança'})
                       </option>
                     ))}
                   </select>
                 </div>
               ) : (
                 <div>
-                  <label htmlFor="creditCard" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="creditCard"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Cartão de Crédito
                   </label>
                   <select
+                    name="creditCard"
                     id="creditCard"
                     className="py-2 px-3 border border-gray-300 rounded-md w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
@@ -319,10 +330,14 @@ export default function TransactionsPage() {
 
               {/* Description */}
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Descrição
                 </label>
                 <input
+                  name="description"
                   type="text"
                   id="description"
                   placeholder="Descrição da transação"
@@ -332,10 +347,14 @@ export default function TransactionsPage() {
 
               {/* Date */}
               <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="date"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Data
                 </label>
                 <input
+                  name="date"
                   type="date"
                   id="date"
                   defaultValue={new Date().toISOString().split('T')[0]}
@@ -361,25 +380,25 @@ export default function TransactionsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Data
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Descrição
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Categoria
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Conta/Cartão
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Valor
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {mockTransactions.map((transaction) => (
+              {transactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(transaction.transactionDate)}
@@ -403,10 +422,15 @@ export default function TransactionsPage() {
                       </div>
                     )}
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
-                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
+                  <td
+                    className={`px-6 py-4 whitespace-nowrap text-sm font-medium text-right ${
+                      transaction.type === 'income'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    {transaction.type === 'income' ? '+' : '-'}{' '}
+                    {formatCurrency(transaction.amount)}
                   </td>
                 </tr>
               ))}
@@ -417,4 +441,3 @@ export default function TransactionsPage() {
     </Layout>
   );
 }
-
